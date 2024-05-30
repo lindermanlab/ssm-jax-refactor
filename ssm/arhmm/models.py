@@ -2,6 +2,9 @@
 Model classes for ARHMMs.
 """
 
+import jax
+jax.config.update("jax_enable_x64", True)
+
 import jax.numpy as np
 import jax.random as jr
 import tensorflow_probability.substrates.jax as tfp
@@ -13,9 +16,6 @@ from ssm.arhmm.base import AutoregressiveHMM
 from ssm.hmm.initial import StandardInitialCondition
 from ssm.hmm.transitions import StationaryTransitions
 from ssm.arhmm.emissions import AutoregressiveEmissions
-
-from jax.config import config
-config.update("jax_enable_x64", True)
 
 @register_pytree_node_class
 class GaussianARHMM(AutoregressiveHMM):
