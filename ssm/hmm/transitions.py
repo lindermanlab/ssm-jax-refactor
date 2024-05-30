@@ -142,7 +142,7 @@ class StationaryTransitions(Transitions):
         num_states = self._distribution.probs_parameter().shape[-1]
         if num_states > 1:
             #stats = np.sum(np.concatenate([posteriors[i].expected_transitions[None] for i in range(len(posteriors))]), axis=0)
-            stats = np.sum(posteriors.expected_transitions, axis=0)
+            stats = np.sum(posteriors['expected_transitions'], axis=0)
             stats += self._prior.concentration
             conditional = ssmd.Categorical.compute_conditional_from_stats(stats)
             self._distribution = ssmd.Categorical.from_params(conditional.mode())
@@ -225,7 +225,7 @@ class SimpleStickyTransitions(Transitions):
         # Sum over trials to compute num_states x num_states matrix
         # where i, j holds the expected number of transitions from
         # state i to state j.
-        stats = np.sum(posteriors.expected_transitions, axis=0)
+        stats = np.sum(posteriors['expected_transitions'], axis=0)
 
         # Compute sufficient statistics of posterior.
         #  c1 = number of observed stays + pseudo-observed stays from the prior.

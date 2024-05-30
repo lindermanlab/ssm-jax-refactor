@@ -43,10 +43,10 @@ def em(model,
 
     @jit
     def update(model):
-        posterior = model.e_step(data, covariates=covariates, metadata=metadata)
-        lp = model.marginal_likelihood(data, posterior, covariates=covariates, metadata=metadata).sum()
-        model = model.m_step(data, posterior, covariates=covariates, metadata=metadata)
-        return model, posterior, lp
+        posterior_dict = model.e_step(data, covariates=covariates, metadata=metadata)
+        lp = model.marginal_likelihood(data, posterior_dict, covariates=covariates, metadata=metadata).sum()
+        model = model.m_step(data, posterior_dict, covariates=covariates, metadata=metadata)
+        return model, posterior_dict, lp
 
     # Run the EM algorithm to convergence
     log_probs = []

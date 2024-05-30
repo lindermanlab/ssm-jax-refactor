@@ -123,10 +123,11 @@ class HMM(SSM):
             raise ValueError(f"Invalid initialize method: {method}.")
 
         # Make a dummy posterior that just exposes expected_states
-        @dataclass
-        class DummyPosterior:
-            expected_states: np.ndarray
-        dummy_posteriors = DummyPosterior(one_hot(assignments, self._num_states))
+        # @dataclass
+        # class DummyPosterior:
+        #     expected_states: np.ndarray
+        # dummy_posteriors = DummyPosterior(one_hot(assignments, self._num_states))
+        dummy_posteriors = dict(expected_states=one_hot(assignments, self._num_states))
 
         # Do one m-step with the dummy posteriors
         self._emissions.m_step(data, dummy_posteriors)
@@ -136,15 +137,32 @@ class HMM(SSM):
     def marginal_likelihood(self, data, posterior=None, covariates=None, metadata=None):
         if posterior is None:
             posterior = self.e_step(data, covariates=covariates, metadata=metadata)
-
-        return posterior.log_normalizer
+        return posterior['log_normalizer']
 
     @auto_batch(batched_args=("data", "covariates", "metadata"))
     def e_step(self, data, covariates=None, metadata=None):
-        return StationaryHMMPosterior.infer(
+        posterior = StationaryHMMPosterior.infer(
             self._initial_condition.log_initial_probs(data, covariates=covariates, metadata=metadata),
             self._emissions.log_likelihoods(data, covariates=covariates, metadata=metadata),
             self._transitions.log_transition_matrices(data, covariates=covariates, metadata=metadata))
+
+        posterior_dict = dict(log_initial_state_probs=posterior.parameters['log_initial_state_probs'],
+                            log_likelihoods=posterior.parameters['log_likelihoods'],
+                            log_transition_matrix=posterior.parameters['log_transition_matrix'],
+                            log_normalizer=posterior.parameters['log_normalizer'],
+                            filtered_potentials=posterior.parameters['filtered_potentials'],
+                            expected_initial_states=posterior.parameters['expected_initial_states'],
+                            expected_states=posterior.parameters['expected_states'],
+                            expected_transitions=posterior.parameters['expected_transitions'])
+
+        # posterior_dict = dict(
+        #                     log_likelihoods=posterior.log_likelihoods,
+        #                     log_transition_matrix=posterior.log_transition_matrix,
+        #                     log_normalizer=posterior.log_normalizer,
+        #                     expected_states=posterior.expected_states,
+        #                     expected_transitions=posterior.expected_transitions)
+
+        return posterior_dict
 
     @ensure_has_batch_dim()
     def m_step(self, data, posterior, covariates=None, metadata=None) -> HMM:

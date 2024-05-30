@@ -93,11 +93,11 @@ class AutoregressiveHMM(HMM):
                                                 metadata=metadata,
                                                 history=history).log_prob(emission)
             # new_history = tree_concatenate(tree_get(_history, slice(1, None)), emission[None, ...])
-            new_history = np.row_stack((history[1:], emission))
+            new_history = np.vstack((history[1:], emission))
             return (state, new_history, lp), None
 
         initial_carry = (tree_get(states, 0),
-                            np.row_stack((history[1:], data[0])),
+                            np.vstack((history[1:], data[0])),
                             lp)
         (_, _, lp), _ = lax.scan(_step, initial_carry,
                                     (tree_get(states, slice(1, None)),
@@ -153,7 +153,7 @@ class AutoregressiveHMM(HMM):
                                                            covariates=initial_covariates,
                                                            metadata=metadata,
                                                            history=history).sample(seed=key1)
-            history = np.row_stack((history[1:], initial_emission))
+            history = np.vstack((history[1:], initial_emission))
 
             def _step(carry, key_and_covariates):
                 history, prev_state = carry
@@ -167,7 +167,7 @@ class AutoregressiveHMM(HMM):
                                                        metadata=metadata,
                                                        history=history).sample(seed=key2)
                 # next_history = tree_concatenate(tree_get(history, slice(1, None)), emission)
-                next_history = np.row_stack((history[1:], emission))
+                next_history = np.vstack((history[1:], emission))
                 return (next_history, state), (state, emission)
 
             keys = jr.split(key, num_steps - 1)

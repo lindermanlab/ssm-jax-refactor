@@ -86,7 +86,7 @@ def _stationary_hmm_log_normalizer(log_initial_state_probs,
 
     # Include the initial potentials to get log Pr(z_t | x_{1:t-1})
     # for all time steps. These are the "filtered potentials".
-    filtered_potentials = np.row_stack([log_initial_state_probs, alphas])
+    filtered_potentials = np.vstack([log_initial_state_probs, alphas])
 
     # Account for the last timestep when computing marginal lkhd
     return spsp.logsumexp(alpha_T + log_likelihoods[-1]), filtered_potentials
@@ -108,7 +108,7 @@ def _nonstationary_hmm_log_normalizer(log_initial_state_probs,
 
     # Include the initial potentials to get log Pr(z_t | x_{1:t-1})
     # for all time steps. These are the "filtered potentials".
-    filtered_potentials = np.row_stack([log_initial_state_probs, alphas])
+    filtered_potentials = np.vstack([log_initial_state_probs, alphas])
 
     # Account for the last timestep when computing marginal lkhd
     return spsp.logsumexp(alpha_T + log_likelihoods[-1]), filtered_potentials
