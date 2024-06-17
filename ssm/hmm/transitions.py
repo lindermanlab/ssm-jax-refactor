@@ -141,7 +141,6 @@ class StationaryTransitions(Transitions):
     def m_step(self, dataset, posteriors, covariates=None, metadata=None) -> StationaryTransitions:
         num_states = self._distribution.probs_parameter().shape[-1]
         if num_states > 1:
-            #stats = np.sum(np.concatenate([posteriors[i].expected_transitions[None] for i in range(len(posteriors))]), axis=0)
             stats = np.sum(posteriors['expected_transitions'], axis=0)
             stats += self._prior.concentration
             conditional = ssmd.Categorical.compute_conditional_from_stats(stats)

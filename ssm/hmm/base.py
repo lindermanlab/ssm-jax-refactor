@@ -123,10 +123,6 @@ class HMM(SSM):
             raise ValueError(f"Invalid initialize method: {method}.")
 
         # Make a dummy posterior that just exposes expected_states
-        # @dataclass
-        # class DummyPosterior:
-        #     expected_states: np.ndarray
-        # dummy_posteriors = DummyPosterior(one_hot(assignments, self._num_states))
         dummy_posteriors = dict(expected_states=one_hot(assignments, self._num_states))
 
         # Do one m-step with the dummy posteriors
@@ -154,13 +150,6 @@ class HMM(SSM):
                             expected_initial_states=posterior.parameters['expected_initial_states'],
                             expected_states=posterior.parameters['expected_states'],
                             expected_transitions=posterior.parameters['expected_transitions'])
-
-        # posterior_dict = dict(
-        #                     log_likelihoods=posterior.log_likelihoods,
-        #                     log_transition_matrix=posterior.log_transition_matrix,
-        #                     log_normalizer=posterior.log_normalizer,
-        #                     expected_states=posterior.expected_states,
-        #                     expected_transitions=posterior.expected_transitions)
 
         return posterior_dict
 
