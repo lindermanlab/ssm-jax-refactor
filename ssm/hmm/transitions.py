@@ -147,6 +147,73 @@ class StationaryTransitions(Transitions):
             self._distribution = ssmd.Categorical.from_params(conditional.mode())
         return self
 
+@register_pytree_node_class
+class StickyTransitions(Transitions):
+    """
+    Basic transition model with a sticky transition matrix.
+    """
+    def __init__(self,
+                 num_states: int,
+                 alpha: float=1.1,
+                 kappa: float=100.0,
+                 transition_matrix=None,
+                 transition_distribution: ssmd.Categorical=None,
+                 transition_distribution_prior: ssmd.Dirichlet=None) -> None:
+        super(StickyTransitions, self).__init__(num_states)
+        self.alpha = alpha
+        self.kappa = kappa
+
+        assert transition_matrix is not None or transition_distribution is not None
+
+        if transition_matrix is not None:
+            self._distribution = ssmd.Categorical(logits=np.log(transition_matrix))
+        else:
+            self._distribution = transition_distribution
+
+        if transition_distribution_prior is None:
+            num_states = self._distribution.probs_parameter().shape[-1]
+            if num_states > 1:
+                transition_distribution_prior = \
+                    ssmd.Dirichlet(kappa * np.eye(num_states) + alpha * np.ones((num_states, num_states)))
+            else:
+                transition_distribution_prior = None
+        self._prior = transition_distribution_prior
+
+    def tree_flatten(self):
+        children = (self._distribution, self._prior)
+        aux_data = (self.num_states, self.alpha, self.kappa)
+        return children, aux_data
+
+    @classmethod
+    def tree_unflatten(cls, aux_data, children):
+        num_states, alpha, kappa = aux_data
+        distribution, prior = children
+        return cls(num_states=num_states,
+                   alpha=alpha,
+                   kappa=kappa,
+                   transition_distribution=distribution,
+                   transition_distribution_prior=prior)
+
+    @property
+    def transition_matrix(self):
+        return self._distribution.probs_parameter()
+
+    def distribution(self, state, covariates=None, metadata=None):
+        return self._distribution[state]
+
+    def log_transition_matrices(self, data, covariates=None, metadata=None):
+        log_P = self._distribution.logits_parameter()
+        log_P -= spsp.logsumexp(log_P, axis=1, keepdims=True)
+        return log_P
+
+    def m_step(self, dataset, posteriors, covariates=None, metadata=None) -> StickyTransitions:
+        num_states = self._distribution.probs_parameter().shape[-1]
+        if num_states > 1:
+            stats = np.sum(posteriors['expected_transitions'], axis=0)
+            stats += self._prior.concentration
+            conditional = ssmd.Categorical.compute_conditional_from_stats(stats)
+            self._distribution = ssmd.Categorical.from_params(conditional.mode())
+        return self
 
 @register_pytree_node_class
 class SimpleStickyTransitions(Transitions):
